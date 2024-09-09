@@ -1,0 +1,54 @@
+# Ignore Mac system files
+.DS_Store
+
+# Bytecode and other Scala artifacts
+*.class
+*.log
+*.cache
+*.out
+*.swp
+*.swo
+
+# Scala project files
+project/target/
+target/
+lib_managed/
+src_managed/
+dist/
+tmp/
+.idea/
+
+# SBT-specific files
+.project
+*.bak
+*.tmp
+*.log
+*.sbtboot
+.sbt/.history
+.sbt/.session
+
+# Akka HTTP logs
+logs/
+*.log
+
+# IntelliJ IDEA files
+.idea/
+*.iml
+*.iws
+
+# ScalaTest result files
+test-reports/
+
+# Terraform specific files
+*.tfstate
+*.tfstate.*
+.terraform/
+terraform.tfvars
+
+# Ignore secrets files
+secrets.auto.tfvars
+*.pem
+
+# AWS-specific files
+.aws/
+*.pem
