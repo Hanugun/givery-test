@@ -69,19 +69,28 @@ resource "aws_instance" "akka_http_server" {
   instance_type = "t2.micro"
 
   security_groups = [aws_security_group.http_server.name]
-
   user_data = <<-EOF
               #!/bin/bash
               sudo yum update -y
               sudo yum install -y java-1.8.0-openjdk-devel git
-              cd /home/ec2-user
-              git clone https://github.com/your-repo/akka-http-rest-api.git
-              cd akka-http-rest-api
-              # Update the application.conf file with RDS endpoint
-              sed -i "s|<rds-endpoint>|${aws_db_instance.akka_mysql_db.endpoint}|" src/main/resources/application.conf
-              sbt run
-              EOF
 
+              # Install sbt
+              echo "Installing sbt..."
+              curl -L "https://www.scala-sbt.org/sbt-rpm.repo" > sbt.repo
+              sudo mv sbt.repo /etc/yum.repos.d/
+              sudo yum install -y sbt
+
+              # Clone the GitHub repository
+              cd /home/ec2-user
+              git clone https://github.com/Hanugun/givery-test
+              cd givery-test  # Match your repository's folder name
+
+              # Update the application.conf file with the correct RDS endpoint
+              sed -i "s|terraform-20240909163138474900000001.cz28mymaavna.ap-northeast-2.rds.amazonaws.com|${aws_db_instance.akka_mysql_db.endpoint}|" src/main/resources/application.conf
+
+              # Run the application using nohup to keep it running after script ends
+              nohup sbt run > akka_http_server.log 2>&1 &
+              EOF
   tags = {
     Name = "AkkaHttpServer"
   }

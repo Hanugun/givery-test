@@ -72,7 +72,7 @@ object Main extends App {
     // }
 
   // Bind and run the server on the specified IP and port
-  val bindingFuture = Http().newServerAt("localhost", 8080).bind(route)
+  val bindingFuture = Http().newServerAt("0.0.0.0", 8080).bind(route)
 
 
   println(s"Server online at http://0.0.0.0:8080/\nPress RETURN to stop...")
