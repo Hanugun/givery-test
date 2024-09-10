@@ -6,11 +6,12 @@ scalaVersion := "2.13.10"
 
 // Akka HTTP and Streams
 libraryDependencies ++= Seq(
+  "com.typesafe.akka" %% "akka-actor" % "2.6.19",
   "com.typesafe.akka" %% "akka-http" % "10.2.9",
   "com.typesafe.akka" %% "akka-stream" % "2.6.19",
   "de.heikoseeberger" %% "akka-http-circe" % "1.38.2",
-  "io.circe" %% "circe-generic" % "0.14.1",
-  "io.circe" %% "circe-parser" % "0.14.1",
+  "com.typesafe.play" %% "play-json" % "2.9.2",
+  "com.typesafe.akka" %% "akka-http-spray-json" % "10.2.9",
   "com.typesafe.slick" %% "slick" % "3.4.0",
   "com.typesafe.slick" %% "slick-hikaricp" % "3.4.0",
   "mysql" % "mysql-connector-java" % "8.0.28",

@@ -8,36 +8,69 @@ import models._
 import repositories._
 import slick.jdbc.MySQLProfile.api._
 import scala.concurrent.ExecutionContext.Implicits.global
-import ch.megard.akka.http.cors.scaladsl.CorsDirectives._
+import scala.concurrent.Future
 import scala.concurrent.Await
 import scala.concurrent.duration._
+import play.api.libs.json._ 
+import java.sql.Timestamp 
+import spray.json.RootJsonFormat
+import spray.json.DefaultJsonProtocol._
+trait JsonFormats {
+  implicit val timestampFormat: Format[Timestamp] = new Format[Timestamp] {
+    def writes(ts: Timestamp): JsValue = JsNumber(ts.getTime)
+    def reads(json: JsValue): JsResult[Timestamp] = json match {
+      case JsNumber(t) => JsSuccess(new Timestamp(t.toLong))
+      case _ => JsError("Timestamp expected")
+    }
+  }
 
-// Import Circe for JSON marshalling/unmarshalling
-import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport._
-import io.circe.generic.auto._
+  implicit val recipeDataFormat: OFormat[RecipeData] = Json.format[RecipeData]
+  implicit val recipeFormat: OFormat[Recipe] = Json.format[Recipe]
+}
 
-object Main extends App {
+object Main extends App with JsonFormats{
+  
   implicit val system = ActorSystem("my-system")
-  implicit val materializer = ActorMaterializer()
 
-  // Initialize database and repository
   val db = Database.forConfig("mydb")
   val recipeRepository = new RecipeRepository(db)
 
-  // Define routes for basic and CRUD operations on recipes
   val route: Route =
-    get {
-      path("") {
+    path("") {
+      get {
         complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, "<h1>Say hello to akka-http</h1>"))
       }
+    } ~
+    path("recipes") {
+      get {
+        onSuccess(recipeRepository.getAllRecipes) { recipes =>
+          val jsonResponse = Json.obj("recipes" -> Json.toJson(recipes))
+          complete(HttpEntity(ContentTypes.`application/json`, jsonResponse.toString()))
+        }
+      } 
+      // ~
+      // post {
+      //   entity(as[RecipeData]) { recipeData => 
+      //     val newRecipe = Recipe(None, recipeData.title, recipeData.makingTime, recipeData.serves, recipeData.ingredients, recipeData.cost)
+          
+      //     onSuccess(recipeRepository.insertRecipe(newRecipe)) { id =>
+      //       val savedRecipe = newRecipe.copy(id = Some(id))
+            
+      //       val jsonResponse = Json.obj(
+      //         "message" -> JsString("Recipe successfully added"),
+      //         "recipe" -> Json.toJson(savedRecipe)
+      //       )
+            
+      //       complete(HttpEntity(ContentTypes.`application/json`, jsonResponse.toString()))
+      //     }
+      //   }
+      // }
     }
 
-  // Bind and run the server on the specified IP and port
-  val port = sys.env.getOrElse("PORT", "8080").toInt // Heroku will provide PORT, default to 8080 if running locally
+  val port = sys.env.getOrElse("PORT", "8080").toInt
   val bindingFuture = Http().newServerAt("0.0.0.0", port).bind(route)
 
   println(s"Server online at http://0.0.0.0:$port/")
 
-  // Keep the server running
   Await.result(system.whenTerminated, Duration.Inf)
 }

@@ -1,8 +1,8 @@
 package models
 
 import java.sql.Timestamp
+case class RecipeData(title: String, makingTime: String, serves: String, ingredients: String, cost: Int)
 
-// Case class representing a recipe
 case class Recipe(
   id: Option[Int],
   title: String,
