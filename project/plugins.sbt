@@ -1,2 +1,1 @@
-// project/plugins.sbt
-addSbtPlugin("com.typesafe.sbt" % "sbt-native-packager" % "1.9.11")
+addSbtPlugin("com.typesafe.sbt" % "sbt-native-packager" % "1.7.6")
