@@ -84,7 +84,7 @@ object Main extends App with JsonFormats {
   }
 
   val route: Route =
-    path("/recipes/" / IntNumber) { id =>
+    path("recipes" / IntNumber) { id =>
       get {
         onSuccess(recipeRepository.getRecipeById(id)) {
           case Some(recipe) => {
@@ -146,7 +146,7 @@ object Main extends App with JsonFormats {
         }
       }
     } ~
-    path("/recipes") {
+    path("recipes") {
       get {
         onSuccess(recipeRepository.getAllRecipes) { recipes =>
           val jsonResponse = Json.obj("recipes" -> Json.toJson(recipes))
