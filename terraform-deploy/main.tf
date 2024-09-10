@@ -5,7 +5,7 @@ provider "aws" {
 # Create a security group for EC2
 resource "aws_security_group" "http_server" {
   name        = "http-server"
-  description = "Allow HTTP inbound traffic"
+  description = "Allow HTTP and SSH inbound traffic"
 
   ingress {
     from_port   = 8080
@@ -13,7 +13,12 @@ resource "aws_security_group" "http_server" {
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"] # Allow public access to port 8080
   }
-
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"] 
+  }
   egress {
     from_port   = 0
     to_port     = 0
@@ -48,7 +53,7 @@ resource "aws_db_instance" "akka_mysql_db" {
   engine               = "mysql"
   engine_version       = "8.0.35"
   instance_class       = "db.t3.micro"
-  db_name                 = "akka_db"
+  db_name              = "akka_db"
   username             = "admin"
   password             = "admin_password"
   publicly_accessible  = true
@@ -67,13 +72,21 @@ resource "aws_db_instance" "akka_mysql_db" {
 resource "aws_instance" "akka_http_server" {
   ami           = "ami-0023481579962abd4" # Amazon Linux 2 AMI (Change if needed)
   instance_type = "t2.micro"
-
+  key_name      = "givery-keypair"
   security_groups = [aws_security_group.http_server.name]
+
   user_data = <<-EOF
               #!/bin/bash
               sudo yum update -y
-              sudo yum install -y java-1.8.0-openjdk-devel git
+              sudo yum install -y java-11-amazon-corretto-devel
+              
+              # Set JAVA_HOME and update PATH
+              export JAVA_HOME=$(dirname $(dirname $(readlink -f $(which java))))
+              export PATH=$JAVA_HOME/bin:$PATH
 
+              # Make JAVA_HOME persistent across reboots
+              echo "export JAVA_HOME=\$(dirname \$(dirname \$(readlink -f \$(which java))))" >> /home/ec2-user/.bashrc
+              echo "export PATH=\$JAVA_HOME/bin:\$PATH" >> /home/ec2-user/.bashrc
               # Install sbt
               echo "Installing sbt..."
               curl -L "https://www.scala-sbt.org/sbt-rpm.repo" > sbt.repo
