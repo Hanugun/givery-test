@@ -71,8 +71,8 @@ object Main extends App {
     // }
 
   // Bind and run the server on the specified IP and port
-  val bindingFuture = Http().newServerAt("0.0.0.0", 8080).bind(route)
-
+  val port = sys.env.getOrElse("PORT", "8080").toInt // Heroku will provide PORT, default to 8080 if running locally
+  val bindingFuture = Http().newServerAt("0.0.0.0", port).bind(route)
 
   println(s"Server online at http://0.0.0.0:8080/\nPress RETURN to stop...")
   StdIn.readLine() // Press ENTER to stop the server
