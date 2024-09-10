@@ -75,7 +75,7 @@ resource "aws_instance" "akka_http_server" {
   key_name      = "givery-keypair"
   security_groups = [aws_security_group.http_server.name]
 
-  user_data = <<-EOF
+user_data = <<-EOF
               #!/bin/bash
               sudo yum update -y
               sudo yum install -y java-11-amazon-corretto-devel
@@ -87,23 +87,26 @@ resource "aws_instance" "akka_http_server" {
               # Make JAVA_HOME persistent across reboots
               echo "export JAVA_HOME=\$(dirname \$(dirname \$(readlink -f \$(which java))))" >> /home/ec2-user/.bashrc
               echo "export PATH=\$JAVA_HOME/bin:\$PATH" >> /home/ec2-user/.bashrc
+
               # Install sbt
-              echo "Installing sbt..."
               curl -L "https://www.scala-sbt.org/sbt-rpm.repo" > sbt.repo
               sudo mv sbt.repo /etc/yum.repos.d/
               sudo yum install -y sbt
 
-              # Clone the GitHub repository
+              # Clone the GitHub repository (clean the directory first)
               cd /home/ec2-user
+              rm -rf givery-test
               git clone https://github.com/Hanugun/givery-test
-              cd givery-test  # Match your repository's folder name
+              cd givery-test
 
               # Update the application.conf file with the correct RDS endpoint
               sed -i "s|terraform-20240909163138474900000001.cz28mymaavna.ap-northeast-2.rds.amazonaws.com|${aws_db_instance.akka_mysql_db.endpoint}|" src/main/resources/application.conf
 
-              # Run the application using nohup to keep it running after script ends
+              # Clean build and run the application using nohup
+              sbt clean compile
               nohup sbt run > akka_http_server.log 2>&1 &
               EOF
+
   tags = {
     Name = "AkkaHttpServer"
   }
