@@ -14,8 +14,8 @@ object RecipeTable {
     def serves = column[String]("serves")
     def ingredients = column[String]("ingredients")
     def cost = column[Int]("cost")
-    def createdAt = column[Timestamp]("created_at", O.Default(new Timestamp(System.currentTimeMillis)))
-    def updatedAt = column[Timestamp]("updated_at", O.Default(new Timestamp(System.currentTimeMillis)))
+    def createdAt = column[Timestamp]("created_at")
+    def updatedAt = column[Timestamp]("updated_at")
 
     def * = (id.?, title, makingTime, serves, ingredients, cost, createdAt.?, updatedAt.?) <> (Recipe.tupled, Recipe.unapply)
   }
