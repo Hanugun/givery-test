@@ -22,8 +22,8 @@ libraryDependencies ++= Seq(
 // Enable strict settings for compatibility with Scala 2.13.x
 scalacOptions ++= Seq("-deprecation", "-feature")
 
-// Manually specify the Main class (replace "Main" with your actual fully qualified class name if in a package)
-mainClass in Compile := Some("Main") // If "Main" is in a package, provide the fully qualified path, e.g., "com.example.Main"
+// Manually specify the Main class using the new slash syntax
+Compile / mainClass := Some("Main") // Update "Main" with your actual class if necessary
 
 // sbt-native-packager plugin for Heroku deployment
 enablePlugins(JavaAppPackaging)
