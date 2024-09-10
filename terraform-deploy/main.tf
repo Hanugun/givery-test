@@ -75,17 +75,11 @@ resource "aws_instance" "akka_http_server" {
   key_name      = "givery-keypair"
   security_groups = [aws_security_group.http_server.name]
 
-  user_data = <<-EOF
+user_data = <<-EOF
               #!/bin/bash
               sudo yum update -y
-
-              # Install Git, Java 11 (Amazon Corretto), and sbt
-              sudo yum install -y git
               sudo yum install -y java-11-amazon-corretto-devel
-              curl -L "https://www.scala-sbt.org/sbt-rpm.repo" > sbt.repo
-              sudo mv sbt.repo /etc/yum.repos.d/
-              sudo yum install -y sbt
-
+              
               # Set JAVA_HOME and update PATH
               export JAVA_HOME=$(dirname $(dirname $(readlink -f $(which java))))
               export PATH=$JAVA_HOME/bin:$PATH
@@ -93,6 +87,11 @@ resource "aws_instance" "akka_http_server" {
               # Make JAVA_HOME persistent across reboots
               echo "export JAVA_HOME=\$(dirname \$(dirname \$(readlink -f \$(which java))))" >> /home/ec2-user/.bashrc
               echo "export PATH=\$JAVA_HOME/bin:\$PATH" >> /home/ec2-user/.bashrc
+
+              # Install sbt
+              curl -L "https://www.scala-sbt.org/sbt-rpm.repo" > sbt.repo
+              sudo mv sbt.repo /etc/yum.repos.d/
+              sudo yum install -y sbt
 
               # Clone the GitHub repository (clean the directory first)
               cd /home/ec2-user
@@ -105,14 +104,13 @@ resource "aws_instance" "akka_http_server" {
 
               # Clean build and run the application using nohup
               sbt clean compile
-              nohup sbt run > ../akka_http_server.log 2>&1 &
+              nohup sbt run > akka_http_server.log 2>&1 &
               EOF
 
   tags = {
     Name = "AkkaHttpServer"
   }
 }
-
 
 # Output the public IP address of the EC2 instance
 output "instance_ip" {
