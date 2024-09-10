@@ -89,7 +89,7 @@ object Main extends App with JsonFormats {
         onSuccess(recipeRepository.getRecipeById(id)) {recipe =>
           val jsonResponse = Json.obj(
             "message" -> JsString("Recipe details by id"),
-            "recipe" -> Json.toJson(recipe)
+            "recipe" -> Json.toJson(Seq(recipe))
           )
           complete(StatusCodes.OK, HttpEntity(ContentTypes.`application/json`, jsonResponse.toString()))
         }
