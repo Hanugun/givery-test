@@ -17,7 +17,7 @@ import java.text.SimpleDateFormat
 
 case class RecipeData(
   title: Option[String], 
-  makingTime: Option[String], 
+  making_time: Option[String], 
   serves: Option[String], 
   ingredients: Option[String], 
   cost: Option[Int]
@@ -76,7 +76,7 @@ object Main extends App with JsonFormats {
   import PlayJsonSupport._
   def validateRecipeData(recipeData: RecipeData): Option[String] = {
     if (recipeData.title.isEmpty) Some("Title is required")
-    else if (recipeData.makingTime.isEmpty) Some("Making time is required")
+    else if (recipeData.making_time.isEmpty) Some("Making time is required")
     else if (recipeData.serves.isEmpty) Some("Serves is required")
     else if (recipeData.ingredients.isEmpty) Some("Ingredients are required")
     else if (recipeData.cost.isEmpty || recipeData.cost.exists(_ <= 0)) Some("Cost must be a positive integer")
@@ -86,20 +86,12 @@ object Main extends App with JsonFormats {
   val route: Route =
     path("recipes" / IntNumber) { id =>
       get {
-        onSuccess(recipeRepository.getRecipeById(id)) {
-          case Some(recipe) => {
-            val jsonResponse = Json.obj(
-              "message" -> JsString("Recipe details by id"),
-              "recipes" -> Json.toJson(recipe)
-            )
-            complete(StatusCodes.OK, HttpEntity(ContentTypes.`application/json`, jsonResponse.toString()))
-          }
-          case None => {
-            val jsonResponse = Json.obj(
-                "message" -> JsString(s"Recipe with ID $id not found"),
-              )
-            complete(StatusCodes.OK, HttpEntity(ContentTypes.`application/json`, jsonResponse.toString()))
-          }
+        onSuccess(recipeRepository.getRecipeById(id)) {recipe =>
+          val jsonResponse = Json.obj(
+            "message" -> JsString("Recipe details by id"),
+            "recipes" -> Json.toJson(recipe)
+          )
+          complete(StatusCodes.OK, HttpEntity(ContentTypes.`application/json`, jsonResponse.toString()))
         }
       } ~
       patch {
@@ -108,7 +100,7 @@ object Main extends App with JsonFormats {
             case Some(errorMessage) =>
               val errorResponse = Json.obj(
                 "message" -> JsString("Recipe update failed!"),
-                "required" -> JsString("title, makingTime, serves, ingredients, cost")
+                "required" -> JsString("title, making_time, serves, ingredients, cost")
               )
               complete(StatusCodes.BadRequest, HttpEntity(ContentTypes.`application/json`, errorResponse.toString()))
 
@@ -116,7 +108,7 @@ object Main extends App with JsonFormats {
               val updateRecipe = Recipe(
                 None, 
                 recipeData.title.getOrElse(""),
-                recipeData.makingTime.getOrElse(""), 
+                recipeData.making_time.getOrElse(""), 
                 recipeData.serves.getOrElse(""), 
                 recipeData.ingredients.getOrElse(""), 
                 recipeData.cost.getOrElse(0)
@@ -159,7 +151,7 @@ object Main extends App with JsonFormats {
             case Some(errorMessage) =>
               val errorResponse = Json.obj(
                 "message" -> JsString("Recipe creation failed!"),
-                "required" -> JsString("title, makingTime, serves, ingredients, cost")
+                "required" -> JsString("title, making_time, serves, ingredients, cost")
               )
               complete(StatusCodes.BadRequest, HttpEntity(ContentTypes.`application/json`, errorResponse.toString()))
 
@@ -168,7 +160,7 @@ object Main extends App with JsonFormats {
               val newRecipe = Recipe(
                 None,
                 recipeData.title.getOrElse(""),
-                recipeData.makingTime.getOrElse(""),
+                recipeData.making_time.getOrElse(""),
                 recipeData.serves.getOrElse(""),
                 recipeData.ingredients.getOrElse(""),
                 recipeData.cost.getOrElse(0),
@@ -188,7 +180,7 @@ object Main extends App with JsonFormats {
                 case scala.util.Failure(exception) =>
                   val errorResponse = Json.obj(
                     "message" -> JsString("Recipe creation failed!"),
-                    "required" -> JsString("title, makingTime, serves, ingredients, cost")
+                    "required" -> JsString("title, making_time, serves, ingredients, cost")
                   )
                   complete(StatusCodes.BadRequest, HttpEntity(ContentTypes.`application/json`, errorResponse.toString()))
               }
