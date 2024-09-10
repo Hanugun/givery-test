@@ -75,7 +75,6 @@ object Main extends App {
   val bindingFuture = Http().newServerAt("0.0.0.0", port).bind(route)
 
   println(s"Server online at http://0.0.0.0:8080/\nPress RETURN to stop...")
-  StdIn.readLine() // Press ENTER to stop the server
 
   bindingFuture
     .flatMap(_.unbind())
