@@ -8,8 +8,9 @@ import models._
 import repositories._
 import slick.jdbc.MySQLProfile.api._
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.io.StdIn
 import ch.megard.akka.http.cors.scaladsl.CorsDirectives._
+import scala.concurrent.Await
+import scala.concurrent.duration._
 
 // Import Circe for JSON marshalling/unmarshalling
 import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport._
@@ -25,58 +26,18 @@ object Main extends App {
 
   // Define routes for basic and CRUD operations on recipes
   val route: Route =
-    get{
-      path(""){
+    get {
+      path("") {
         complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, "<h1>Say hello to akka-http</h1>"))
       }
     }
-    //path("") {
-      //get {
-        // Basic testing route
-        //complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, "<h1>Say hello to akka-http</h1>"))
-        // Uncomment the following to test database retrieval:
-        // onSuccess(recipeRepository.getAllRecipes) { recipes =>
-        //   complete(recipes)  // Responding with JSON formatted recipes
-        // }
-      //}
-      // Uncomment this block to test recipe insertion:
-      // post {
-      //   entity(as[Recipe]) { recipe =>
-      //     onSuccess(recipeRepository.insertRecipe(recipe)) { id =>
-      //       complete(s"Recipe added with ID: $id")
-      //     }
-      //   }
-      // }
-      //}
-    // Uncomment this block to test retrieval, update, and deletion of recipes by ID:
-    // path("recipes" / IntNumber) { id =>
-    //   get {
-    //     onSuccess(recipeRepository.getRecipeById(id)) {
-    //       case Some(recipe) => complete(recipe)
-    //       case None => complete(s"Recipe with ID $id not found")
-    //     }
-    //   } ~
-    //   put {
-    //     entity(as[Recipe]) { updatedRecipe =>
-    //       onSuccess(recipeRepository.updateRecipe(id, updatedRecipe)) { _ =>
-    //         complete(s"Recipe with ID $id updated")
-    //       }
-    //     }
-    //   } ~
-    //   delete {
-    //     onSuccess(recipeRepository.deleteRecipe(id)) { _ =>
-    //       complete(s"Recipe with ID $id deleted")
-    //     }
-    //   }
-    // }
 
   // Bind and run the server on the specified IP and port
   val port = sys.env.getOrElse("PORT", "8080").toInt // Heroku will provide PORT, default to 8080 if running locally
   val bindingFuture = Http().newServerAt("0.0.0.0", port).bind(route)
 
-  println(s"Server online at http://0.0.0.0:8080/\nPress RETURN to stop...")
+  println(s"Server online at http://0.0.0.0:$port/")
 
-  bindingFuture
-    .flatMap(_.unbind())
-    .onComplete(_ => system.terminate())
+  // Keep the server running
+  Await.result(system.whenTerminated, Duration.Inf)
 }
