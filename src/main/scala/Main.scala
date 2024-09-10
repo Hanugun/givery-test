@@ -89,7 +89,7 @@ object Main extends App with JsonFormats {
         onSuccess(recipeRepository.getRecipeById(id)) {recipe =>
           val jsonResponse = Json.obj(
             "message" -> JsString("Recipe details by id"),
-            "recipes" -> Json.toJson(recipe)
+            "recipe" -> Json.toJson(recipe)
           )
           complete(StatusCodes.OK, HttpEntity(ContentTypes.`application/json`, jsonResponse.toString()))
         }
@@ -102,7 +102,7 @@ object Main extends App with JsonFormats {
                 "message" -> JsString("Recipe update failed!"),
                 "required" -> JsString("title, making_time, serves, ingredients, cost")
               )
-              complete(StatusCodes.BadRequest, HttpEntity(ContentTypes.`application/json`, errorResponse.toString()))
+              complete(StatusCodes.OK, HttpEntity(ContentTypes.`application/json`, errorResponse.toString()))
 
             case None =>
               val updateRecipe = Recipe(
@@ -153,7 +153,7 @@ object Main extends App with JsonFormats {
                 "message" -> JsString("Recipe creation failed!"),
                 "required" -> JsString("title, making_time, serves, ingredients, cost")
               )
-              complete(StatusCodes.BadRequest, HttpEntity(ContentTypes.`application/json`, errorResponse.toString()))
+              complete(StatusCodes.OK, HttpEntity(ContentTypes.`application/json`, errorResponse.toString()))
 
             case None =>
               val currentTimestamp = new Timestamp(System.currentTimeMillis())
@@ -173,7 +173,7 @@ object Main extends App with JsonFormats {
                   val savedRecipe = newRecipe.copy(id = Some(id))
                   val jsonResponse = Json.obj(
                     "message" -> JsString("Recipe successfully created!"),
-                    "recipe" -> Json.toJson(savedRecipe)
+                    "recipe" -> Json.toJson(Seq(savedRecipe))
                   )
                   complete(StatusCodes.OK, HttpEntity(ContentTypes.`application/json`, jsonResponse.toString()))
 
@@ -182,7 +182,7 @@ object Main extends App with JsonFormats {
                     "message" -> JsString("Recipe creation failed!"),
                     "required" -> JsString("title, making_time, serves, ingredients, cost")
                   )
-                  complete(StatusCodes.BadRequest, HttpEntity(ContentTypes.`application/json`, errorResponse.toString()))
+                  complete(StatusCodes.OK, HttpEntity(ContentTypes.`application/json`, errorResponse.toString()))
               }
           }
         }
