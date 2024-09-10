@@ -6,7 +6,7 @@ import java.sql.Timestamp
 
 object RecipeTable {
   val recipes = TableQuery[RecipeTable]
-
+  // Define the table schema
   class RecipeTable(tag: Tag) extends Table[Recipe](tag, "recipes") {
     def id = column[Int]("id", O.PrimaryKey, O.AutoInc)
     def title = column[String]("title")

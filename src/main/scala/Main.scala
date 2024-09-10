@@ -14,7 +14,7 @@ import scala.concurrent.Future
 import java.sql.Timestamp
 import slick.jdbc.MySQLProfile.api._
 import java.text.SimpleDateFormat
-
+//RecipeData DTO
 case class RecipeData(
   title: Option[String], 
   making_time: Option[String], 
@@ -69,11 +69,12 @@ object Main extends App with JsonFormats {
 
   implicit val system = ActorSystem("my-system")
   implicit val executionContext = system.dispatcher
-
+  // Initialize the database
   val db = Database.forConfig("mydb")
   val recipeRepository = new RecipeRepository(db)
 
   import PlayJsonSupport._
+  // Validate recipe data
   def validateRecipeData(recipeData: RecipeData): Option[String] = {
     if (recipeData.title.isEmpty) Some("Title is required")
     else if (recipeData.making_time.isEmpty) Some("Making time is required")
@@ -82,9 +83,10 @@ object Main extends App with JsonFormats {
     else if (recipeData.cost.isEmpty || recipeData.cost.exists(_ <= 0)) Some("Cost must be a positive integer")
     else None
   }
-
+  // Routes
   val route: Route =
     path("recipes" / IntNumber) { id =>
+    // Get recipe by ID
       get {
         onSuccess(recipeRepository.getRecipeById(id)) {recipe =>
           val jsonResponse = Json.obj(
@@ -94,16 +96,18 @@ object Main extends App with JsonFormats {
           complete(StatusCodes.OK, HttpEntity(ContentTypes.`application/json`, jsonResponse.toString()))
         }
       } ~
+      // Update recipe by ID
       patch {
         entity(as[RecipeData]) { recipeData =>
           validateRecipeData(recipeData) match {
+            // Handle validation errors
             case Some(errorMessage) =>
               val errorResponse = Json.obj(
                 "message" -> JsString("Recipe update failed!"),
                 "required" -> JsString("title, making_time, serves, ingredients, cost")
               )
               complete(StatusCodes.OK, HttpEntity(ContentTypes.`application/json`, errorResponse.toString()))
-
+            // Update recipe
             case None =>
               val updateRecipe = Recipe(
                 None, 
@@ -113,7 +117,7 @@ object Main extends App with JsonFormats {
                 recipeData.ingredients.getOrElse(""), 
                 recipeData.cost.getOrElse(0)
               )
-              onComplete(recipeRepository.updateRecipe(id, updateRecipe)) { 
+              onComplete(recipeRepository.updateRecipe(id, updateRecipe)) {
                 case scala.util.Success(id) =>
                   val jsonResponse = Json.obj(
                     "message" -> JsString("Recipe successfully updated!"),
@@ -127,6 +131,7 @@ object Main extends App with JsonFormats {
           }
         }
       } ~
+      // Delete recipe by ID
       delete {
         onComplete(recipeRepository.deleteRecipe(id)) {
           case scala.util.Success(id) =>
@@ -139,14 +144,17 @@ object Main extends App with JsonFormats {
       }
     } ~
     path("recipes") {
+      // Get all recipes
       get {
         onSuccess(recipeRepository.getAllRecipes) { recipes =>
           val jsonResponse = Json.obj("recipes" -> Json.toJson(recipes))
           complete(StatusCodes.OK, HttpEntity(ContentTypes.`application/json`, jsonResponse.toString()))
         }
       } ~
+      // Create new recipe
       post {
         entity(as[RecipeData]) { recipeData =>
+        // Handle validation errors
           validateRecipeData(recipeData) match {
             case Some(errorMessage) =>
               val errorResponse = Json.obj(
@@ -154,7 +162,7 @@ object Main extends App with JsonFormats {
                 "required" -> JsString("title, making_time, serves, ingredients, cost")
               )
               complete(StatusCodes.OK, HttpEntity(ContentTypes.`application/json`, errorResponse.toString()))
-
+            // Insert new recipe
             case None =>
               val currentTimestamp = new Timestamp(System.currentTimeMillis())
               val newRecipe = Recipe(
@@ -188,6 +196,7 @@ object Main extends App with JsonFormats {
         }
       } 
     } ~
+    // Handle not found requests
     complete(StatusCodes.NotFound, "The requested resource could not be found.")
     
 

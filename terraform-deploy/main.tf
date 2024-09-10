@@ -12,7 +12,7 @@ provider "aws" {
 }
 
 provider "heroku" {
-  api_key = "HRKU-e57ce8b1-6dc8-4795-8d2d-35afe5669c31" # Use variable for the Heroku API key for security
+  api_key = var.heroku_api_key
 }
 
 # Create a security group for RDS (for the MySQL database on AWS)
