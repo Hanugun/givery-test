@@ -1,33 +1,21 @@
+terraform {
+  required_providers {
+    heroku = {
+      source  = "heroku/heroku"
+      version = "~> 5.0"
+    }
+  }
+}
+
 provider "aws" {
-  region = "ap-northeast-2" # Set your preferred AWS region
+  region = "ap-northeast-2"
 }
 
-# Create a security group for EC2
-resource "aws_security_group" "http_server" {
-  name        = "http-server"
-  description = "Allow HTTP and SSH inbound traffic"
-
-  ingress {
-    from_port   = 8080
-    to_port     = 8080
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"] # Allow public access to port 8080
-  }
-  ingress {
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"] 
-  }
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+provider "heroku" {
+  api_key = "HRKU-e57ce8b1-6dc8-4795-8d2d-35afe5669c31" # Use variable for the Heroku API key for security
 }
 
-# Create a security group for RDS
+# Create a security group for RDS (for the MySQL database on AWS)
 resource "aws_security_group" "rds_sg" {
   name = "rds-security-group"
 
@@ -35,7 +23,7 @@ resource "aws_security_group" "rds_sg" {
     from_port   = 3306
     to_port     = 3306
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"] # Allow public access to MySQL (change this in production)
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   egress {
@@ -46,19 +34,19 @@ resource "aws_security_group" "rds_sg" {
   }
 }
 
-# Create an RDS instance for MySQL
+# Create an RDS instance for MySQL (this is your AWS database)
 resource "aws_db_instance" "akka_mysql_db" {
-  allocated_storage    = 20
-  storage_type         = "gp2"
-  engine               = "mysql"
-  engine_version       = "8.0.35"
-  instance_class       = "db.t3.micro"
-  db_name              = "akka_db"
-  username             = "admin"
-  password             = "admin_password"
-  publicly_accessible  = true
-  skip_final_snapshot  = true
-  deletion_protection  = false
+  allocated_storage      = 20
+  storage_type           = "gp2"
+  engine                 = "mysql"
+  engine_version         = "8.0.35"
+  instance_class         = "db.t3.micro"
+  db_name                = "akka_db"
+  username               = "admin"
+  password               = "admin_password"
+  publicly_accessible    = true
+  skip_final_snapshot    = true
+  deletion_protection    = false
   backup_retention_period = 7
 
   vpc_security_group_ids = [aws_security_group.rds_sg.id]
@@ -68,56 +56,46 @@ resource "aws_db_instance" "akka_mysql_db" {
   }
 }
 
-# Create an EC2 instance for the Akka HTTP server
-resource "aws_instance" "akka_http_server" {
-  ami           = "ami-0023481579962abd4" # Amazon Linux 2 AMI (Change if needed)
-  instance_type = "t2.micro"
-  key_name      = "givery-keypair"
-  security_groups = [aws_security_group.http_server.name]
+# Heroku app setup for deploying the Scala RestAPI server
+resource "heroku_app" "scala_api" {
+  name   = var.heroku_app_name
+  region = "us"
+}
 
-user_data = <<-EOF
-              #!/bin/bash
-              sudo yum update -y
-              sudo yum install -y java-11-amazon-corretto-devel
-              
-              # Set JAVA_HOME and update PATH
-              export JAVA_HOME=$(dirname $(dirname $(readlink -f $(which java))))
-              export PATH=$JAVA_HOME/bin:$PATH
+# Heroku build from your GitHub repository
+resource "heroku_build" "scala_build" {
+  app_id = heroku_app.scala_api.id
 
-              # Make JAVA_HOME persistent across reboots
-              echo "export JAVA_HOME=\$(dirname \$(dirname \$(readlink -f \$(which java))))" >> /home/ec2-user/.bashrc
-              echo "export PATH=\$JAVA_HOME/bin:\$PATH" >> /home/ec2-user/.bashrc
-
-              # Install sbt
-              curl -L "https://www.scala-sbt.org/sbt-rpm.repo" > sbt.repo
-              sudo mv sbt.repo /etc/yum.repos.d/
-              sudo yum install -y sbt
-
-              # Clone the GitHub repository (clean the directory first)
-              cd /home/ec2-user
-              rm -rf givery-test
-              git clone https://github.com/Hanugun/givery-test
-              cd givery-test
-
-              # Update the application.conf file with the correct RDS endpoint
-              sed -i "s|terraform-20240909163138474900000001.cz28mymaavna.ap-northeast-2.rds.amazonaws.com|${aws_db_instance.akka_mysql_db.endpoint}|" src/main/resources/application.conf
-
-              # Clean build and run the application using nohup
-              sbt clean compile
-              nohup sbt run > akka_http_server.log 2>&1 &
-              EOF
-
-  tags = {
-    Name = "AkkaHttpServer"
+  source {
+    url = "https://github.com/Hanugun/givery-test/archive/refs/heads/main.tar.gz"  # GitHub repository tarball
   }
 }
 
-# Output the public IP address of the EC2 instance
-output "instance_ip" {
-  value = aws_instance.akka_http_server.public_ip
+# Heroku environment variables (used for your database connection and other configuration)
+resource "heroku_config" "scala_env" {
+  vars = {
+    DATABASE_URL = aws_db_instance.akka_mysql_db.endpoint
+    SCALA_ENV    = "development"
+  }
 }
 
-# Output the RDS endpoint
+# Output the RDS endpoint (this is the MySQL database endpoint on AWS)
 output "rds_endpoint" {
   value = aws_db_instance.akka_mysql_db.endpoint
+}
+
+# Output the Heroku app URL (this is the URL where your Heroku-hosted API will be accessible)
+output "heroku_app_url" {
+  value = heroku_app.scala_api.web_url
+}
+
+# Variables for sensitive data
+variable "heroku_api_key" {
+  type      = string
+  sensitive = true
+}
+
+variable "heroku_app_name" {
+  type    = string
+  default = "givery-rest-api"
 }

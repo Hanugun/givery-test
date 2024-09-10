@@ -24,7 +24,7 @@ object Main extends App {
   val recipeRepository = new RecipeRepository(db)
 
   // Define routes for basic and CRUD operations on recipes
-  val route: Route = cors() {
+  val route: Route =
     get{
       path(""){
         complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, "<h1>Say hello to akka-http</h1>"))
@@ -48,7 +48,6 @@ object Main extends App {
       //   }
       // }
       //}
-    }
     // Uncomment this block to test retrieval, update, and deletion of recipes by ID:
     // path("recipes" / IntNumber) { id =>
     //   get {
