@@ -84,7 +84,6 @@ object Main extends App with JsonFormats {
   }
 
   val route: Route =
-  handleExceptions(myExceptionHandler) {
     path("recipes" / IntNumber) { id =>
       get {
         onSuccess(recipeRepository.getRecipeById(id)) {
@@ -198,7 +197,6 @@ object Main extends App with JsonFormats {
       } 
     } ~
     complete(StatusCodes.NotFound, "The requested resource could not be found.")
-  }
     
 
   // Start the server
