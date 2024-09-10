@@ -72,11 +72,6 @@ object Main extends App with JsonFormats {
 
   // Route definition
   val route: Route =
-    path("") {
-      get {
-        complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, "<h1>Givery Rest API Test</h1>"))
-      }
-    } ~
     path("recipes" / IntNumber) { id =>
       get {
         onSuccess(recipeRepository.getRecipeById(id)) {
@@ -146,7 +141,8 @@ object Main extends App with JsonFormats {
           }
         }
       }
-    }
+    } ~
+    complete(StatusCodes.NotFound, "The requested resource could not be found.")
     
 
   // Start the server
