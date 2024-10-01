@@ -17,6 +17,9 @@ libraryDependencies ++= Seq(
   "mysql" % "mysql-connector-java" % "8.0.28",
   "com.zaxxer" % "HikariCP" % "4.0.3",
   "ch.qos.logback" % "logback-classic" % "1.2.3",
+  "com.typesafe.akka" %% "akka-http-testkit" % "10.2.9" % Test,
+  "org.scalatest" %% "scalatest" % "3.2.9" % Test,
+  "com.typesafe.akka" %% "akka-actor-testkit-typed" % "2.6.16" % Test,
   "ch.megard" %% "akka-http-cors" % "1.1.3"
 )
 
